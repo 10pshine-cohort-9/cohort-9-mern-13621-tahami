@@ -42,6 +42,8 @@ const Notes = () => {
     };
 
     useEffect(() => {
+        // The initial fetch synchronizes component state with the API.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchNotes();
     }, []);
 
@@ -77,6 +79,7 @@ const Notes = () => {
             setError(
                 error.message || "Unable to save note."
             );
+            throw error;
         } finally {
             setSaving(false);
         }

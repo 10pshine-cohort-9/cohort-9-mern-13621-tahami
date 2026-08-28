@@ -1,7 +1,20 @@
+// @ts-check
+
 import API_BASE_URL from "./api";
 
 const API_URL = `${API_BASE_URL}/auth`;
 
+/** @typedef {{name: string, email: string, password: string}} RegistrationPayload */
+/** @typedef {{email: string, password: string}} LoginPayload */
+/** @typedef {{success: boolean, message?: string, data?: Record<string, unknown>}} AuthResponseData */
+/** @typedef {{response: Response, data: AuthResponseData}} AuthResponse */
+
+/**
+ * @param {string} url
+ * @param {RequestInit} options
+ * @param {string} fallbackMessage
+ * @returns {Promise<AuthResponse>}
+ */
 const fetchAuthResponse = async (url, options, fallbackMessage) => {
     try {
         const response = await fetch(url, options);
@@ -13,6 +26,7 @@ const fetchAuthResponse = async (url, options, fallbackMessage) => {
     }
 };
 
+/** @param {RegistrationPayload} userData */
 export const registerUser = async (userData) => {
     const { response, data } = await fetchAuthResponse(`${API_URL}/register`, {
         method: "POST",
@@ -29,6 +43,7 @@ export const registerUser = async (userData) => {
     return data;
 };
 
+/** @param {LoginPayload} userData */
 export const loginUser = async (userData) => {
     const { response, data } = await fetchAuthResponse(`${API_URL}/login`, {
         method: "POST",
@@ -48,19 +63,30 @@ export const loginUser = async (userData) => {
 export const getProfile = async () => {
     const token = localStorage.getItem("token");
 
-    const response = await fetch(`${API_URL}/me`, {
+    const { response, data } = await fetchAuthResponse(`${API_URL}/me`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
         },
-    });
-
-    const data = await response.json();
+    }, "Failed to fetch profile");
 
     if (!response.ok) {
         throw new Error(data.message || "Failed to fetch profile");
     }
 
-    return data;
+    const profile = data?.data;
+
+    if (!profile || typeof profile !== "object") {
+        throw new Error("Invalid profile response");
+    }
+
+    return {
+        ...data,
+        data: {
+            ...profile,
+            name: typeof profile.name === "string" ? profile.name : "",
+            email: typeof profile.email === "string" ? profile.email : "",
+        },
+    };
 };
