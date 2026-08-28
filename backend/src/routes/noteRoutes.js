@@ -1,5 +1,4 @@
 import express from "express";
-//import { createNote } from "../controllers/noteController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 import {
